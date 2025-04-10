@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/booking.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="booking-container">
+    <div class="booking-header">
+        <div class="header-left">
+            <h2>{{ floor.name }} - Room Booking Schedule</h2>
+            <div class="floor-selector">
+                <select id="floorSelect" onchange="changeFloor(this.value)">
+                    <option value="">Select Floor</option>
+                    {% for available_floor in available_floors %}
+                    <option value="{{ available_floor.slug }}" {% if available_floor.slug == floor.slug %}selected{% endif %}>
+                        {{ available_floor.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="date-navigation">
+            <a href="?date={{ prev_day }}" class="nav-btn prev-day">◀</a>
+            <div class="current-date" data-date="{{ date|date:'Y-m-d' }}">
+                {{ date|date:"l, F d, Y" }}
+            </div>
+            <a href="?date={{ next_day }}" class="nav-btn next-day">▶</a>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="booking-table">
+            <thead>
+                <tr>
+                    <th class="time-slot-header">Time Slot</th>
+                    {% for room in rooms %}
+                    <th class="room-header">{{ room }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for time_slot in time_slots %}
+                <tr>
+                    <td class="time-slot">{{ time_slot|date:"h:i a" }}</td>
+                    {% for room in rooms %}
+                    <td class="booking-cell {% if room in booked_slots and time_slot|date:'H:i' in booked_slots|get_item:room %}booked{% endif %}" 
+                        data-room="{{ room }}" 
+                        data-time="{{ time_slot|date:'H:i' }}">
+                        {% if room in booked_slots and time_slot|date:'H:i' in booked_slots|get_item:room %}
+                            <div class="booking-info">
+                                Booked by {{ booked_slots|get_item:room|get_item:time_slot|date:'H:i' }}
+                            </div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/booking.js' %}"></script>
+<script>
+function changeFloor(slug) {
+    if (slug) {
+        const currentUrl = new URL(window.location.href);
+        const date = currentUrl.searchParams.get('date');
+        let newUrl = `/booking/floor/${slug}/`;
+        if (date) {
+            newUrl += `?date=${date}`;
+        }
+        window.location.href = newUrl;
+    }
+}
+</script>
+{% endblock %} 
